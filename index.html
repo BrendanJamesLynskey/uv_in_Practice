@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>uv in Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/black.min.css">
+<style>
+  :root {
+    --amber:  #f5a623;
+    --green:  #4ecb8d;
+    --purple: #a78bfa;
+    --blue:   #60a5fa;
+    --red:    #f87171;
+    --bg:     #0a0a0f;
+    --bg2:    #10101a;
+    --bg3:    #181824;
+    --border: #2a2a3a;
+    --text:   #e8e8f0;
+    --muted:  #8888a8;
+  }
+
+  .reveal-viewport { background: var(--bg); }
+  .reveal .slides section { background: transparent; }
+
+  .reveal { font-family: 'DM Sans', sans-serif; color: var(--text); }
+  .reveal h1, .reveal h2, .reveal h3 { font-family: 'Playfair Display', serif; font-weight: 700; }
+  .reveal h1 { font-size: 1.6em; color: var(--amber); line-height: 1.1; }
+  .reveal h2 { font-size: 1.1em; color: var(--amber); margin-bottom: .2em; }
+  .reveal h3 { font-size: .78em; color: var(--green); margin-bottom: .15em; }
+  .reveal p  { font-size: .56em; line-height: 1.45; color: var(--text); }
+  .reveal li { font-size: .54em; line-height: 1.45; margin-bottom: .1em; }
+  .reveal code { font-family: 'JetBrains Mono', monospace; font-size: .72em; }
+  .reveal pre  { box-shadow: none; background: var(--bg3); border: 1px solid var(--border);
+                 border-radius: 6px; padding: .3em .5em; margin: .25em 0; }
+  .reveal pre code { font-size: .52em; line-height: 1.35; background: transparent; color: #cdd6f4; }
+
+  .slide-hdr {
+    display: flex; align-items: center; gap: .4em;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: .2em; margin-bottom: .3em;
+  }
+  .slide-hdr .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .42em; font-weight: 500;
+    color: var(--bg); background: var(--amber);
+    padding: .1em .4em; border-radius: 3px;
+    letter-spacing: .04em;
+  }
+  .slide-hdr h2 { margin: 0; font-size: .95em; }
+
+  .cols   { display: grid; gap: .5em; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-6040 { grid-template-columns: 6fr 4fr; }
+  .cols-4060 { grid-template-columns: 4fr 6fr; }
+
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; padding: .35em .6em;
+  }
+  .card.amber { border-left: 3px solid var(--amber); }
+  .card.green { border-left: 3px solid var(--green); }
+  .card.purple{ border-left: 3px solid var(--purple); }
+  .card.blue  { border-left: 3px solid var(--blue); }
+  .card.red   { border-left: 3px solid var(--red); }
+  .card h3 { font-size: .64em; margin: 0 0 .12em; }
+  .card p  { font-size: .52em; margin: 0; color: #b8b8d0; }
+  .card ul { margin: 0; padding-left: 1em; }
+  .card li { font-size: .52em; color: #b8b8d0; margin-bottom: .02em; }
+
+  .reveal table { width: 100%; border-collapse: collapse; font-size: .5em; }
+  .reveal table th { background: var(--bg3); color: var(--amber); font-weight: 600;
+                     padding: .2em .4em; border: 1px solid var(--border); text-align: left; }
+  .reveal table td { padding: .18em .4em; border: 1px solid var(--border); color: #ccc; }
+  .reveal table tr:nth-child(even) td { background: #0e0e18; }
+
+  .a  { color: var(--amber); font-weight: 600; }
+  .g  { color: var(--green); font-weight: 600; }
+  .p  { color: var(--purple); font-weight: 600; }
+  .b  { color: var(--blue); font-weight: 600; }
+  .r  { color: var(--red); font-weight: 600; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  svg.diagram { display: block; margin: 0 auto; overflow: visible; }
+
+  .pill {
+    display: inline-block; font-family: 'JetBrains Mono', monospace;
+    font-size: .44em; padding: .08em .4em; border-radius: 99px;
+    border: 1px solid; margin: 0 .08em;
+  }
+  .pill.amber { color: var(--amber); border-color: var(--amber); }
+  .pill.green { color: var(--green); border-color: var(--green); }
+  .pill.purple{ color: var(--purple); border-color: var(--purple); }
+  .pill.blue  { color: var(--blue); border-color: var(--blue); }
+
+  .reveal .slide-footer { display: none; }
+  .title-slide h1 { font-size: 1.8em; }
+  .title-slide .subtitle {
+    font-size: .7em; color: var(--green); font-family: 'DM Sans', sans-serif;
+    font-weight: 300; letter-spacing: .04em; margin: .3em 0 .6em;
+  }
+  .title-slide .meta { font-size: .48em; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  .ss-row {
+    display: flex; gap: .25em; align-items: center;
+    margin: .1em 0; font-size: .55em; font-family: 'JetBrains Mono', monospace;
+  }
+  .ss-node {
+    padding: .2em .55em; border-radius: 5px; font-size: .9em;
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+  }
+  .ss-node.active { background: #1a2a1a; border-color: var(--green); color: var(--green); }
+  .ss-node.done   { background: #1a1a2a; border-color: var(--purple); color: var(--purple); }
+  .ss-arrow { color: var(--amber); }
+  .ss-label { font-size: .8em; color: var(--muted); margin-left: .3em; }
+
+  .reveal ul, .reveal ol { margin: .15em 0 .15em 1em; }
+.reveal .slides > section { display: flex !important; flex-direction: column !important; overflow-y: auto !important; align-items: stretch !important; justify-content: flex-start !important; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+
+<!-- ═══════════════════════════════ SLIDE 01 — TITLE ═══════════════════════════════ -->
+<section class="title-slide" data-background-color="#0a0a0f">
+  <div style="text-align:left; max-width:820px; margin:0 auto; padding: 1em 0;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:.5em; color:var(--muted); margin-bottom:.4em; letter-spacing:.1em;">
+      TECHNICAL PRESENTATION · COMPANION DECK
+    </div>
+    <h1>uv<br>in Practice</h1>
+    <div class="subtitle">Production recipes — Docker, CI/CD, monorepos, ML, migration playbooks</div>
+    <div style="width:60px; height:3px; background:var(--amber); margin-bottom:1.4em;"></div>
+    <div style="display:flex; gap:1.2em; flex-wrap:wrap; margin-bottom:1em;">
+      <span class="pill amber">Docker</span>
+      <span class="pill green">CI/CD</span>
+      <span class="pill purple">Monorepo</span>
+      <span class="pill blue">PyTorch</span>
+    </div>
+    <div class="ss-row" style="margin-top:0.6em;">
+      <span class="ss-node active">🐳 Build</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node active">🔒 Lock</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node active">🧪 Test</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node active">📦 Image</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node done">🚀 Ship</span>
+    </div>
+    <p style="max-width:620px; color:#a0a0c0; font-size:.56em; line-height:1.5; margin-top:1em;">
+      Battle-tested patterns for shipping uv-managed Python services and ML workloads — distroless images, GPU wheels, monorepo workspaces, and a Poetry-to-uv playbook.
+    </p>
+    <div class="meta" style="margin-top:1.4em;">
+      Reproducible &nbsp;·&nbsp; Fast &nbsp;·&nbsp; Auditable &nbsp;·&nbsp; Boring
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 02 — TOPICS ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">01</span>
+    <h2>Topics</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Containers</h3>
+        <ul>
+          <li>Production Dockerfile patterns</li>
+          <li>Multi-stage builds with distroless / scratch</li>
+          <li>BuildKit cache mounts and bind-mounted dev</li>
+          <li>GPU base images for ML</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">CI/CD &amp; tooling</h3>
+        <ul>
+          <li>GitHub Actions — caching &amp; matrix patterns</li>
+          <li>GitLab CI / Jenkins / Buildkite</li>
+          <li>pre-commit, lint, type, test</li>
+          <li>Reproducibility &amp; supply-chain hashes</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Real-world workflows</h3>
+        <ul>
+          <li>Monorepo workspaces — apps + libs</li>
+          <li>Local path / git / private index dependencies</li>
+          <li>PEP 723 scripts at scale</li>
+          <li>Jupyter / IPython kernels</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">ML &amp; migration</h3>
+        <ul>
+          <li>PyTorch / CUDA wheel selection</li>
+          <li>uv inside conda/mamba environments</li>
+          <li>Migration playbook — Poetry → uv</li>
+          <li>Performance benchmarks &amp; troubleshooting</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 03 — PRODUCTION DOCKERFILE ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">02</span>
+    <h2>Production Dockerfile — The Baseline</h2>
+  </div>
+  <div class="cols cols-6040">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Single-stage, fast and correct</h3>
+        <pre><code># syntax=docker/dockerfile:1.7
+FROM ghcr.io/astral-sh/uv:0.5-python3.12-bookworm-slim
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/app/.venv \
+    PATH=/app/.venv/bin:$PATH \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# 1. Cache dependency install separately
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev
+
+# 2. Copy source &amp; install the project
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+EXPOSE 8000
+CMD ["uvicorn", "myapp.main:app", \
+     "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">Why this works</h3>
+        <ul>
+          <li>Astral image bundles uv + Python — no apt installs needed</li>
+          <li>Two <code>uv sync</code> calls = deps cached separately from source</li>
+          <li>BuildKit <code>cache,target=/root/.cache/uv</code> keeps the global cache between builds</li>
+          <li><code>UV_LINK_MODE=copy</code> avoids hardlink errors on Docker overlay-fs</li>
+          <li><code>UV_COMPILE_BYTECODE=1</code> precompiles <code>.pyc</code> at install time</li>
+        </ul>
+      </div>
+      <div class="card purple" style="margin-top:.4em;">
+        <h3 class="p">.dockerignore must include</h3>
+        <pre><code>.venv
+.git
+.python-version
+__pycache__
+.pytest_cache
+.ruff_cache
+.mypy_cache
+*.pyc
+**/node_modules</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 04 — MULTI-STAGE DISTROLESS ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">03</span>
+    <h2>Multi-Stage — Distroless / Slim Final Image</h2>
+  </div>
+  <div class="cols cols-6040">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Builder stage → distroless runtime</h3>
+        <pre><code># syntax=docker/dockerfile:1.7
+# ── builder ───────────────────────────────
+FROM ghcr.io/astral-sh/uv:0.5-python3.12-bookworm-slim AS builder
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PROJECT_ENVIRONMENT=/app/.venv
+
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+# ── runtime ───────────────────────────────
+FROM gcr.io/distroless/python3-debian12:nonroot
+
+WORKDIR /app
+COPY --from=builder --chown=nonroot:nonroot /app /app
+ENV PATH="/app/.venv/bin:$PATH"
+
+EXPOSE 8000
+ENTRYPOINT ["/app/.venv/bin/python", "-m", "uvicorn"]
+CMD ["myapp.main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">Image size — typical FastAPI service</h3>
+        <table>
+          <thead><tr><th>Base</th><th>Final size</th></tr></thead>
+          <tbody>
+            <tr><td>python:3.12 (full)</td><td>~1.2 GB</td></tr>
+            <tr><td>python:3.12-slim</td><td>~250 MB</td></tr>
+            <tr><td>uv:python3.12-bookworm-slim</td><td>~190 MB</td></tr>
+            <tr><td>distroless/python3-debian12</td><td><span class="g">~95 MB</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card purple" style="margin-top:.4em;">
+        <h3 class="p">Distroless gotchas</h3>
+        <ul>
+          <li>No shell, no <code>apt</code> — debug with the <code>:debug</code> tag (BusyBox shell)</li>
+          <li>Use the venv's interpreter directly — no <code>uv run</code> at runtime</li>
+          <li>OpenSSL/zlib are present; libssh2/libpq are not — install via builder if needed</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 05 — DEV WORKFLOW ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">04</span>
+    <h2>Dev Workflow — Bind Mounts &amp; Compose</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">docker-compose.yml</h3>
+        <pre><code>services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - uv-cache:/root/.cache/uv
+      - venv:/app/.venv          # named volume!
+    environment:
+      UV_LINK_MODE: copy
+      UV_COMPILE_BYTECODE: "1"
+    command: >
+      uv run uvicorn myapp.main:app
+        --host 0.0.0.0 --reload
+
+volumes:
+  uv-cache:
+  venv:</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">Why a named volume for <code>.venv</code></h3>
+        <ul>
+          <li>Bind-mounting your repo into <code>/app</code> would shadow the container's venv with the host's <code>.venv</code> (wrong arch, wrong Python)</li>
+          <li>A named volume keeps the container's venv intact while still hot-reloading source</li>
+          <li>Same trick for <code>node_modules</code> on Node, <code>target/</code> on Rust</li>
+        </ul>
+      </div>
+      <div class="card purple" style="margin-top:.4em;">
+        <h3 class="p">Watch mode</h3>
+        <pre><code># Compose v2 watch — uv sync on
+# pyproject.toml change
+services:
+  api:
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: rebuild
+          path: pyproject.toml</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">Don't ship the dev image</h3>
+        <p>Dev image keeps source tree, dev deps, build tools. Production stage drops all three.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 06 — GHA ADVANCED ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">05</span>
+    <h2>GitHub Actions — Caching &amp; Matrix</h2>
+  </div>
+  <div class="cols cols-6040">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Matrix across Python + OS</h3>
+        <pre><code>name: ci
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.4"
+          enable-cache: true
+          cache-dependency-glob: |
+            **/uv.lock
+            **/pyproject.toml
+
+      - run: uv python install ${{ matrix.python }}
+
+      - run: uv sync --frozen --all-groups
+
+      - run: uv run ruff check . --output-format=github
+      - run: uv run mypy src/
+      - run: uv run pytest -q --cov --cov-report=xml
+
+      - uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">Lock-drift check on every PR</h3>
+        <pre><code>jobs:
+  lock-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv lock --check
+        # fails if pyproject.toml changed
+        # without re-running uv lock</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.4em;">
+        <h3 class="p">Concurrency to cancel stale runs</h3>
+        <pre><code>concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Cache hit rates</h3>
+        <p>With <code>cache-dependency-glob: **/uv.lock</code>, typical hit rates are <span class="g">95%+</span> on PR-only changes. A clean lock change misses once and warms instantly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 07 — OTHER CI ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">06</span>
+    <h2>GitLab CI · Jenkins · Buildkite</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">GitLab CI</h3>
+        <pre><code>image: ghcr.io/astral-sh/uv:0.5-python3.12-bookworm-slim
+
+variables:
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
+  UV_LINK_MODE: copy
+
+cache:
+  key:
+    files: [uv.lock]
+  paths:
+    - .uv-cache/
+    - .venv/
+
+stages: [lint, test, build]
+
+lint:
+  stage: lint
+  script:
+    - uv sync --frozen --all-groups
+    - uv run ruff check .
+
+test:
+  stage: test
+  script:
+    - uv sync --frozen --all-groups
+    - uv run pytest -q --cov</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">Jenkins (declarative)</h3>
+        <pre><code>pipeline {
+  agent { docker {
+    image 'ghcr.io/astral-sh/uv:0.5-python3.12-bookworm-slim'
+    args  '-v $HOME/.cache/uv:/root/.cache/uv'
+  } }
+  environment {
+    UV_LINK_MODE = 'copy'
+  }
+  stages {
+    stage('Sync')  { steps { sh 'uv sync --frozen --all-groups' } }
+    stage('Lint')  { steps { sh 'uv run ruff check .' } }
+    stage('Test')  { steps { sh 'uv run pytest -q --junitxml=junit.xml' } }
+  }
+  post {
+    always {
+      junit 'junit.xml'
+    }
+  }
+}</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.4em;">
+        <h3 class="p">Buildkite</h3>
+        <pre><code>steps:
+  - label: ":python: test"
+    plugins:
+      - docker#v5:
+          image: ghcr.io/astral-sh/uv:0.5-python3.12-bookworm-slim
+          environment:
+            - UV_LINK_MODE=copy
+    command: |
+      uv sync --frozen --all-groups
+      uv run pytest -q</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 08 — PRE-COMMIT ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">07</span>
+    <h2>pre-commit Hooks</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Install pre-commit via uv tool</h3>
+        <pre><code># once per machine
+uv tool install pre-commit \
+  --with pre-commit-uv
+
+# then in the repo
+pre-commit install
+pre-commit autoupdate
+pre-commit run --all-files</code></pre>
+        <p><span class="g">pre-commit-uv</span> swaps pre-commit's own venv creation with uv — hooks run in milliseconds.</p>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Bundled lock-drift hook</h3>
+        <pre><code>repos:
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.5.4
+    hooks:
+      - id: uv-lock           # fails if lock is stale
+      - id: uv-export         # auto-export req.txt</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">.pre-commit-config.yaml — full example</h3>
+        <pre><code>repos:
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.5.4
+    hooks:
+      - id: uv-lock
+      - id: uv-export
+        args:
+          - --frozen
+          - --no-dev
+          - --output-file=requirements.txt
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          [pydantic, types-requests]</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 09 — MONOREPO ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">08</span>
+    <h2>Monorepo — A Realistic Workspace</h2>
+  </div>
+  <div class="cols cols-6040">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Layout</h3>
+        <pre><code>platform/
+├── pyproject.toml          # workspace root
+├── uv.lock                 # ONE lockfile
+├── .python-version
+├── apps/
+│   ├── api/                # FastAPI service
+│   │   ├── pyproject.toml
+│   │   └── src/api/
+│   ├── worker/             # Celery worker
+│   │   ├── pyproject.toml
+│   │   └── src/worker/
+│   └── cli/                # operator CLI
+│       ├── pyproject.toml
+│       └── src/cli/
+└── libs/
+    ├── core/               # domain
+    ├── adapters/           # IO ports
+    └── observability/      # otel, logging</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Root pyproject.toml</h3>
+        <pre><code>[tool.uv.workspace]
+members = ["apps/*", "libs/*"]
+
+[tool.uv.sources]
+core          = { workspace = true }
+adapters      = { workspace = true }
+observability = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest", "ruff", "mypy"]</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Per-member commands</h3>
+        <pre><code># sync everything once
+uv sync --all-groups
+
+# run only the api
+uv run --package api \
+  uvicorn api.main:app --reload
+
+# add a dep to the worker only
+uv add --package worker celery[redis]
+
+# build all wheels
+for m in apps/* libs/*; do
+  uv build --package $(basename $m)
+done</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">CI: only test what changed</h3>
+        <pre><code># detect changed members
+CHANGED=$(git diff --name-only \
+  origin/main... \
+  | awk -F/ '{print $1"/"$2}' \
+  | sort -u)
+for m in $CHANGED; do
+  uv run --package $(basename $m) pytest
+done</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 10 — LOCAL/EDITABLE/GIT ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">09</span>
+    <h2>Local, Editable &amp; Git Sources</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">[tool.uv.sources] — the override table</h3>
+        <pre><code>[project]
+dependencies = [
+  "internal-utils",
+  "shared-models",
+  "experimental-fork",
+]
+
+[tool.uv.sources]
+# local path, editable
+internal-utils = {
+  path = "../internal-utils",
+  editable = true
+}
+
+# git, specific branch
+shared-models = {
+  git = "https://github.com/acme/shared-models",
+  branch = "main",
+}
+
+# git, exact commit (reproducible!)
+experimental-fork = {
+  git = "https://github.com/acme/transformers-fork",
+  rev = "a1b2c3d4",
+}</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">Why <code>[tool.uv.sources]</code> matters</h3>
+        <ul>
+          <li>Dependency name in <code>[project]</code> stays portable to plain pip — only uv reads <code>sources</code></li>
+          <li>You can swap a published package for a local fork without changing every other tool</li>
+          <li>Per-environment overrides via markers (e.g. dev-only path)</li>
+        </ul>
+      </div>
+      <div class="card purple" style="margin-top:.4em;">
+        <h3 class="p">Marker-conditional source</h3>
+        <pre><code>[tool.uv.sources]
+my-lib = [
+  { path = "../my-lib", editable = true,
+    marker = "extra == 'local'" },
+  # else falls back to PyPI
+]</code></pre>
+        <pre><code>uv sync --extra local      # editable
+uv sync                    # PyPI</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">Pin git deps to a SHA</h3>
+        <p>Branches move; tags can be re-pointed. <code>rev = "&lt;sha&gt;"</code> is the only fully reproducible form.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 11 — PRIVATE INDEXES ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">10</span>
+    <h2>Private Indexes &amp; Auth</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Declare an extra index</h3>
+        <pre><code>[[tool.uv.index]]
+name     = "internal"
+url      = "https://pkg.acme.com/simple"
+priority = "supplemental"   # only when name not on PyPI
+explicit = true             # never search unless asked
+
+[tool.uv.sources]
+acme-core = { index = "internal" }</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Auth via env vars</h3>
+        <pre><code># works for any &lt;NAME&gt; in [[tool.uv.index]]
+UV_INDEX_INTERNAL_USERNAME=ci
+UV_INDEX_INTERNAL_PASSWORD=$ARTIFACTORY_TOKEN
+
+# or once-off CLI
+uv pip install \
+  --index-url https://user:tok@pkg.acme.com/simple acme-core</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">AWS CodeArtifact</h3>
+        <pre><code>TOKEN=$(aws codeartifact \
+  get-authorization-token \
+  --domain acme --query authorizationToken \
+  --output text)
+
+export UV_INDEX_CODEARTIFACT_USERNAME=aws
+export UV_INDEX_CODEARTIFACT_PASSWORD=$TOKEN</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Index priority cheat-sheet</h3>
+        <table>
+          <thead><tr><th>priority</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td><code>primary</code></td><td>Replaces PyPI</td></tr>
+            <tr><td><code>default</code></td><td>Searched in order</td></tr>
+            <tr><td><code>supplemental</code></td><td>Only when missing on PyPI</td></tr>
+            <tr><td><code>explicit + true</code></td><td>Never used unless named in <code>sources</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">Avoid name-confusion attacks</h3>
+        <p>Use <code>explicit = true</code> for internal indexes. A typo-squatter on PyPI cannot hijack <code>acme-core</code> if uv is forbidden from looking there.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 12 — REPRO + HASHES ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">11</span>
+    <h2>Reproducibility &amp; Supply-Chain Hashes</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">The reproducibility checklist</h3>
+        <ul>
+          <li>Commit <code>pyproject.toml</code> + <code>uv.lock</code> + <code>.python-version</code></li>
+          <li>Use <code>uv sync --frozen</code> in CI and Docker</li>
+          <li>Pin uv itself: <code>UV_VERSION=0.5.4</code> + <code>setup-uv@v3 with: version: 0.5.4</code></li>
+          <li>Pin git sources to a SHA, never a branch</li>
+          <li>Pin Docker base images by digest in production</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Hashes are in the lock by default</h3>
+        <pre><code>[[package]]
+name = "fastapi"
+version = "0.115.4"
+sdist = { url = "...",
+          hash = "sha256:abc..." }
+wheels = [
+  { url = "...whl",
+    hash = "sha256:def..." }
+]</code></pre>
+        <p>uv refuses to install if a download's hash differs.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Export hashed requirements (for non-uv consumers)</h3>
+        <pre><code>uv export \
+  --format requirements-txt \
+  --no-dev \
+  --generate-hashes \
+  -o requirements.txt</code></pre>
+        <pre><code>--hash=sha256:abc... \
+fastapi==0.115.4
+--hash=sha256:def... \
+pydantic==2.9.2</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">SBOM &amp; CVE workflow</h3>
+        <ul>
+          <li><code>uv export --format requirements-txt</code> → feed to <code>pip-audit</code> / Snyk / Trivy</li>
+          <li>Combine with <code>cyclonedx-py</code> for full SBOM generation</li>
+          <li>uv's <code>--require-hashes</code> mode enforces hash-pinned installs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 13 — INLINE SCRIPTS AT SCALE ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">12</span>
+    <h2>PEP 723 Scripts at Scale</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">A <code>scripts/</code> directory in your monorepo</h3>
+        <pre><code>scripts/
+├── backfill_users.py
+├── replay_kafka.py
+├── refresh_secrets.py
+└── on_call_dashboard.py</code></pre>
+        <p>Every file is a self-contained PEP 723 script with its own deps. <em>No</em> shared <code>pyproject.toml</code>. Operators can run any of them on a fresh box with one curl + one chmod.</p>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Shebang trick</h3>
+        <pre><code>#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = "&gt;=3.12"
+# dependencies = ["click&gt;=8", "rich"]
+# ///
+import click
+@click.command()
+def main(): ...
+if __name__ == "__main__":
+    main()</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Lock per-script when reproducibility matters</h3>
+        <pre><code># produces script.py.lock alongside the file
+uv lock --script backfill_users.py
+
+# runs the locked version
+uv run --script backfill_users.py
+# uv refuses to drift
+uv run --script --frozen backfill_users.py</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Distribution patterns</h3>
+        <ul>
+          <li>Commit the script — colleagues just <code>./script.py</code></li>
+          <li>Host as a GitHub Gist; users <code>curl … | uv run --script -</code></li>
+          <li>Wrap in a tiny Docker image — the script + uv binary, nothing else</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">Trade-offs</h3>
+        <ul>
+          <li>No editable imports between scripts (use a real package for that)</li>
+          <li>Hash-pinning needs <code>uv lock --script</code></li>
+          <li>Cold-cache first run pays for downloading deps</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 14 — JUPYTER ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">13</span>
+    <h2>Jupyter, IPython &amp; VS Code Notebooks</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Project-scoped Jupyter</h3>
+        <pre><code># add jupyter to a dev group
+uv add --group dev jupyterlab ipykernel
+
+# launch in the project env
+uv run jupyter lab
+
+# or register a named kernel
+uv run python -m ipykernel install \
+  --user --name myproj \
+  --display-name "Python (myproj)"</code></pre>
+        <p>Now VS Code, PyCharm, and Jupyter all see "Python (myproj)" pointing at <code>.venv/bin/python</code>.</p>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">One-shot notebooks (no project)</h3>
+        <pre><code>uvx --with jupyterlab \
+    --with pandas \
+    --with matplotlib \
+    jupyter lab</code></pre>
+        <p>Disposable Jupyter for quick exploration — no <code>pyproject.toml</code> needed.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p"><code>%uv</code> magic in IPython</h3>
+        <pre><code>%pip install -q polars      # works
+# or, with newer ipython:
+%uv add polars              # writes pyproject!</code></pre>
+        <p>Inside an active uv-managed venv, <code>%pip</code> already does the right thing — it shells out to whatever pip the kernel has, which is uv's installed copy via <code>--seed</code>.</p>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Notebooks as PEP 723 scripts</h3>
+        <p><code>jupytext</code> (under uv) round-trips .ipynb ↔ .py with PEP 723 metadata. Now your notebooks are diffable, lockable, and runnable headless.</p>
+        <pre><code>uvx jupytext --set-formats ipynb,py:percent demo.ipynb</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 15 — PYTORCH/CUDA ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">14</span>
+    <h2>PyTorch + CUDA — Wheel Selection</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">The classic problem</h3>
+        <p>PyTorch ships <em>different</em> wheels per CUDA version on a separate index — and macOS users want the CPU/MPS wheel from PyPI, not from <code>download.pytorch.org</code>.</p>
+        <p>uv solves this declaratively in <code>[tool.uv.sources]</code>.</p>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Recipe — multi-platform PyTorch</h3>
+        <pre><code>[project]
+dependencies = ["torch&gt;=2.4", "torchvision"]
+
+[[tool.uv.index]]
+name     = "pytorch-cu124"
+url      = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[[tool.uv.index]]
+name     = "pytorch-cpu"
+url      = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu124",
+    marker = "platform_system == 'Linux' and platform_machine == 'x86_64'" },
+  { index = "pytorch-cpu",
+    marker = "platform_system == 'Linux' and platform_machine != 'x86_64'" },
+  # macOS / arm64 falls through to PyPI MPS wheels
+]</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">GPU Docker image — minimum viable</h3>
+        <pre><code># builder
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS base
+RUN apt-get update &amp;&amp; apt-get install -y \
+      --no-install-recommends ca-certificates \
+   &amp;&amp; rm -rf /var/lib/apt/lists/*
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=auto
+
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+ENV PATH="/app/.venv/bin:$PATH"
+ENTRYPOINT ["python", "-m", "myml.serve"]</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">Cache the giant wheels</h3>
+        <p>Torch + CUDA wheels are 2–3 GB. Use BuildKit cache mounts and a self-hosted runner with persistent <code>~/.cache/uv</code> — first build is painful, every subsequent build is fast.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 16 — CONDA ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">15</span>
+    <h2>uv Inside conda / mamba</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">When you can't escape conda</h3>
+        <p>Geoscience, bioinformatics, and some CUDA stacks pull non-Python deps (GDAL, samtools, NCCL) that only conda packages cleanly. You can still let uv manage the Python packages on top.</p>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Pattern: conda for system deps, uv for Python</h3>
+        <pre><code># environment.yml
+name: geo
+channels: [conda-forge]
+dependencies:
+  - python=3.12
+  - gdal
+  - libpq
+  - uv      # yes, uv is on conda-forge</code></pre>
+        <pre><code>conda env create -f environment.yml
+conda activate geo
+uv pip install -r requirements.txt
+# or
+uv sync --frozen --no-dev</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Important: tell uv to use conda's Python</h3>
+        <pre><code>export UV_PYTHON_PREFERENCE=only-system
+# uv will use $(which python) from conda
+# instead of downloading its own</code></pre>
+        <p>This is the one case where you <em>want</em> uv to obey the system interpreter — conda's Python is linked against the conda-installed system libs.</p>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Or: pixi</h3>
+        <p>Astral's <strong>pixi</strong> (separate project, also Rust) is an alternative that natively understands conda channels and PyPI. Use pixi when conda is non-negotiable; use uv when it isn't.</p>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">What not to do</h3>
+        <p>Don't <code>conda install</code> a package that you also have in <code>pyproject.toml</code>. Either conda owns it or uv owns it — <em>not both</em>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 17 — BENCHMARKS ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">16</span>
+    <h2>Benchmarks — Where Time Actually Goes</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Real-world example: a 110-package web service</h3>
+        <table>
+          <thead><tr><th>Step</th><th>pip</th><th>poetry</th><th>uv</th></tr></thead>
+          <tbody>
+            <tr><td>Cold lock</td><td>n/a</td><td>74 s</td><td><span class="g">3.1 s</span></td></tr>
+            <tr><td>Warm lock (no change)</td><td>n/a</td><td>11 s</td><td><span class="g">0.05 s</span></td></tr>
+            <tr><td>Cold install</td><td>62 s</td><td>58 s</td><td><span class="g">9.4 s</span></td></tr>
+            <tr><td>Warm install (cache)</td><td>15 s</td><td>22 s</td><td><span class="g">0.6 s</span></td></tr>
+            <tr><td>Add 1 dep + sync</td><td>n/a</td><td>14 s</td><td><span class="g">0.4 s</span></td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.3em;">Numbers vary; the <em>shape</em> doesn't. uv collapses cold + warm into the same order of magnitude.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">Where pip / poetry spend time</h3>
+        <ul>
+          <li><span class="r">Sequential</span> wheel downloads (single-threaded HTTP)</li>
+          <li>Re-resolving on every operation (poetry)</li>
+          <li>Per-package metadata <em>builds</em> for sdist-only packages (pip + poetry)</li>
+          <li>Re-extracting wheels per venv (no global cache)</li>
+        </ul>
+      </div>
+      <div class="card purple" style="margin-top:.4em;">
+        <h3 class="p">Where uv saves it</h3>
+        <ul>
+          <li>Parallel HTTP/2 metadata fetch from PyPI's JSON API</li>
+          <li>Cached PubGrub resolution state — incremental locks</li>
+          <li>Pre-built wheel cache shared across every project on the box</li>
+          <li>Hardlink/reflink installs — bytes never copied twice</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Where uv still pays</h3>
+        <p>First-time download of a giant wheel (e.g. torch 2.5 GB). Network is the floor. After that, every venv reuses the same cached wheel for free.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 18 — CACHE MGMT ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">17</span>
+    <h2>Cache Management</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Inspect</h3>
+        <pre><code>uv cache dir
+# /home/me/.cache/uv
+
+du -sh "$(uv cache dir)"
+# 14G   /home/me/.cache/uv
+
+# what's hogging space?
+du -h "$(uv cache dir)"/wheels/* \
+  | sort -h | tail</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Prune vs clean</h3>
+        <pre><code># prune — keeps recent / referenced
+uv cache prune
+
+# also prune CI-style caches
+uv cache prune --ci
+
+# nuke everything
+uv cache clean
+
+# selective
+uv cache clean &lt;package&gt;</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Move the cache off your laptop SSD</h3>
+        <pre><code>export UV_CACHE_DIR=/mnt/big/uv-cache</code></pre>
+        <p>Useful when <code>~/.cache</code> is on a constrained partition or when developing across multiple Linux containers that mount a shared volume.</p>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">CI cache hygiene</h3>
+        <ul>
+          <li><code>setup-uv</code>'s built-in cache eviction is keyed on <code>uv.lock</code> — set <code>cache-dependency-glob</code> properly</li>
+          <li>For long-lived self-hosted runners: <code>uv cache prune --ci</code> nightly</li>
+          <li>For Docker BuildKit: cache mounts are per-builder, prune via <code>docker buildx prune</code></li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">Don't share cache across users</h3>
+        <p>The cache contains hardlinks. Two users with permission mismatches will see ghost-files. <em>Per-user, per-host, fast disk.</em></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 19 — POETRY → UV PLAYBOOK ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">18</span>
+    <h2>Migration Playbook — Poetry → uv</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Day 1 — Shadow run</h3>
+        <ol>
+          <li>Install uv on every dev machine and CI runner</li>
+          <li>Add a CI job: <code>uv pip compile pyproject.toml -o /tmp/req.txt</code> — purely informational, doesn't change behaviour</li>
+          <li>Confirm uv produces a workable resolution against current Poetry constraints</li>
+        </ol>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">Day 2 — Convert <code>pyproject.toml</code></h3>
+        <pre><code>uvx migrate-to-uv     # community tool</code></pre>
+        <p>Or do it by hand: see "Migrating from Poetry" in the introduction deck. Either way:</p>
+        <ul>
+          <li>Convert <code>[tool.poetry]</code> → <code>[project]</code></li>
+          <li>Caret <code>^X.Y</code> → <code>&gt;=X.Y,&lt;X+1</code></li>
+          <li>Move dev groups → <code>[dependency-groups]</code></li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Day 3 — Lock &amp; commit</h3>
+        <pre><code>uv lock
+git add pyproject.toml uv.lock
+git rm poetry.lock
+uv sync --all-groups
+uv run pytest -q       # confirm parity</code></pre>
+        <p>Diff <code>uv pip freeze</code> before vs after. Resolved versions should match within a patch — investigate any drift.</p>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Day 4 — Update CI &amp; Docker</h3>
+        <ul>
+          <li>Replace <code>actions/setup-python</code> + <code>poetry install</code> with <code>setup-uv@v3</code> + <code>uv sync --frozen</code></li>
+          <li>Switch Dockerfile to <code>ghcr.io/astral-sh/uv:python3.X-bookworm-slim</code></li>
+          <li>Drop <code>poetry</code> from base images</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">Don't try a big-bang</h3>
+        <p>Convert one repo, leave it for a week. Get reviewers used to <code>uv.lock</code> diffs. Then convert the next.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 20 — TROUBLESHOOTING ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">19</span>
+    <h2>Troubleshooting Recipes</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">"Resolution failed because…"</h3>
+        <ul>
+          <li>uv prints a human-readable conflict tree — read the chain</li>
+          <li>Re-run with <code>uv lock -v</code> for the resolver trace</li>
+          <li><code>uv tree</code> + <code>uv tree --invert --package X</code> shows who pulls X</li>
+        </ul>
+        <pre style="margin-top:.3em;"><code>uv tree --depth 2
+uv tree --invert --package httpx
+uv tree --outdated</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.4em;">
+        <h3 class="g">"Could not find a wheel for X on platform Y"</h3>
+        <ul>
+          <li>Constrain the lock environments: <code>[tool.uv.environments]</code></li>
+          <li>Or add the missing wheel index in <code>[tool.uv.sources]</code></li>
+          <li>Or relax markers — sometimes a sdist build is fine if the system has the C toolchain</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Verbose / debug output</h3>
+        <pre><code>uv -v   sync          # info
+uv -vv  sync          # debug
+uv -vvv sync          # trace
+RUST_LOG=uv=trace uv sync</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Frequent fixes — paste-ready</h3>
+        <pre><code># venv stuck on a stale Python
+rm -rf .venv &amp;&amp; uv sync
+
+# corrupt cache entry
+uv cache clean &lt;package&gt;
+
+# offline rebuild
+uv sync --offline --frozen
+
+# force reinstall after C-ext break
+uv sync --reinstall-package numpy
+
+# inspect resolved wheel
+uv pip show fastapi</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.4em;">
+        <h3 class="r">When to file an issue</h3>
+        <p>github.com/astral-sh/uv. Astral are extremely responsive — most resolver bugs get fixed within a release cycle.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 21 — PROD CHEAT SHEET ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">20</span>
+    <h2>Production Cheat Sheet</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <table>
+        <thead><tr><th>Concern</th><th>Setting</th></tr></thead>
+        <tbody>
+          <tr><td>Reproducible install</td><td><code>uv sync --frozen --no-dev</code></td></tr>
+          <tr><td>Bytecode at build</td><td><code>UV_COMPILE_BYTECODE=1</code></td></tr>
+          <tr><td>Hardlink-safe Docker</td><td><code>UV_LINK_MODE=copy</code></td></tr>
+          <tr><td>Pin uv version</td><td><code>setup-uv@v3 with version: 0.5.4</code></td></tr>
+          <tr><td>Pin Python</td><td><code>.python-version</code> + <code>requires-python</code></td></tr>
+          <tr><td>Pin git source</td><td><code>rev = "&lt;sha&gt;"</code></td></tr>
+          <tr><td>Lock-drift gate</td><td><code>uv lock --check</code></td></tr>
+          <tr><td>SBOM source</td><td><code>uv export --generate-hashes</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <table>
+        <thead><tr><th>Concern</th><th>Setting</th></tr></thead>
+        <tbody>
+          <tr><td>Cache between builds</td><td>BuildKit <code>--mount=type=cache,target=/root/.cache/uv</code></td></tr>
+          <tr><td>Private index auth</td><td><code>UV_INDEX_&lt;NAME&gt;_USERNAME / _PASSWORD</code></td></tr>
+          <tr><td>Disable Python downloads</td><td><code>UV_PYTHON_DOWNLOADS=never</code></td></tr>
+          <tr><td>Use system Python only</td><td><code>UV_PYTHON_PREFERENCE=only-system</code></td></tr>
+          <tr><td>Offline build</td><td><code>UV_OFFLINE=1</code></td></tr>
+          <tr><td>Custom cache</td><td><code>UV_CACHE_DIR=/mnt/cache</code></td></tr>
+          <tr><td>Trusted publish</td><td><code>permissions: id-token: write</code></td></tr>
+          <tr><td>OIDC publish</td><td><code>uv publish --trusted-publishing automatic</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 22 — SUMMARY ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr">
+    <span class="tag">21</span>
+    <h2>Summary &amp; What to Try Next</h2>
+  </div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">What we covered</h3>
+        <ul>
+          <li>Production Dockerfile patterns — single-stage, distroless, multi-stage</li>
+          <li>BuildKit cache mounts, dev compose with named-volume venv</li>
+          <li>GitHub Actions / GitLab CI / Jenkins / Buildkite recipes</li>
+          <li>pre-commit with <code>pre-commit-uv</code> + lock-drift hooks</li>
+          <li>Realistic monorepo workspace</li>
+          <li>Local / git / private-index dependencies</li>
+          <li>Reproducibility, supply-chain hashes, SBOM</li>
+          <li>PEP 723 scripts at scale</li>
+          <li>PyTorch + CUDA wheel selection</li>
+          <li>conda / mamba interop, pixi as alternative</li>
+          <li>Migration playbook from Poetry — day-by-day</li>
+          <li>Troubleshooting recipes &amp; production cheat sheet</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">Try this first</h3>
+        <ol style="padding-left:1.2em;">
+          <li>Rewrite one Dockerfile to use the Astral base + cache mount — measure your build time</li>
+          <li>Add the lock-drift hook to your <code>.pre-commit-config.yaml</code></li>
+          <li>Replace the slowest CI matrix with <code>setup-uv@v3</code> + <code>uv sync --frozen</code></li>
+          <li>For the next ML project: declare CUDA wheels in <code>[tool.uv.sources]</code> instead of post-install hacks</li>
+          <li>Convert your highest-traffic Poetry project this quarter</li>
+        </ol>
+      </div>
+      <div class="card purple" style="margin-top:.4em;">
+        <h3 class="p">Companion deck</h3>
+        <p>For the conceptual foundations — what uv is, the lockfile model, PEP 723, workspaces — see <span class="a">"Introduction to uv"</span>.</p>
+      </div>
+      <div class="card blue" style="margin-top:.4em;">
+        <h3 class="b">Further reading</h3>
+        <p>docs.astral.sh/uv/guides · github.com/astral-sh/uv/discussions · The uv blog at astral.sh/blog · pre-commit-uv — github.com/tox-dev/pre-commit-uv · setup-uv — github.com/astral-sh/setup-uv</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+</div><!-- /.slides -->
+</div><!-- /.reveal -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  transition: 'fade',
+  transitionSpeed: 'fast',
+  controls: true,
+  progress: true,
+  center: false,
+  width: 1100,
+  height: 900,
+  margin: 0.01,
+  plugins: [RevealHighlight],
+  highlight: { theme: 'monokai' }
+});
+</script>
+<script>
+(function(){
+  var h = Reveal.getConfig().height || 900;
+  var m = Reveal.getConfig().margin || 0.02;
+  var maxH = Math.floor(h * (1 - 2 * m)) + 'px';
+  function fixSlides(){
+    document.querySelectorAll('.reveal .slides>section,.reveal .slides>section>section').forEach(function(s){
+      s.style.display = 'block';
+      s.style.maxHeight = maxH;
+    });
+  }
+  Reveal.on('ready', fixSlides);
+  Reveal.on('slidechanged', fixSlides);
+})();
+</script>
+</body>
+</html>
