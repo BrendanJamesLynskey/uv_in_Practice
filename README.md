@@ -50,7 +50,7 @@ A companion to **Introduction to uv** — production recipes for shipping uv-man
 
 ## Technology
 
-[Reveal.js 4.6](https://revealjs.com) · [highlight.js](https://highlightjs.org) · Playfair Display + DM Sans + JetBrains Mono
+[Reveal.js 4.6](https://revealjs.com) · [highlight.js](https://highlightjs.org) · Outfit + Plus Jakarta Sans + Fira Code
 
 Single self-contained `index.html` — no build step, no npm, no dependencies to install.
 
